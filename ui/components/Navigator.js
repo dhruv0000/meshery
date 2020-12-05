@@ -209,6 +209,16 @@ const categories = [
     title: 'MeshMap',
     show: true,
     link: true,
+    children: [
+      {
+        id: "Overview",
+        icon: <FontAwesomeIcon icon={faMap} fixedWidth />,
+        href: "/overview",
+        title: "View & Compare Results",
+        show: true,
+        link: true,
+      },
+    ],
   },
   {
     id: 'Performance',
