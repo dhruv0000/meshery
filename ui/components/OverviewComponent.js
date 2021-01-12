@@ -22,6 +22,34 @@ const style = () => ({
   },
 });
 
+const meshImg = {
+  istio: {
+    name: "Istio",
+    img: "/static/img/istio.svg",
+    gradient: "linear-gradient(147deg, #4286f4, #6dd5ed)",
+  },
+  osm: {
+    name: "OSM",
+    img: "/static/img/osm.svg",
+    gradient: "linear-gradient(147deg, #00c9ff 0%, #92fe9d 74%)",
+  },
+  Linkerd: {
+    name: "Linkerd",
+    img: "/static/img/linkerd.svg",
+    gradient: "linear-gradient(147deg, #78ffd6 0%, #a8ff78 74%)",
+  },
+  Consul: {
+    name: "Consul",
+    img: "/static/img/consul.svg",
+    gradient: "linear-gradient(147deg, #F95089, #E05A41)",
+  },
+  "Network Service Mesh": {
+    name: "Network Service Mesh",
+    img: "/static/img/networkservicemesh.svg",
+    gradient: "linear-gradient(147deg, #FF9671, #EBC112)",
+  }
+};
+
 class OverviewComponent extends React.Component {
 
   constructor(props) {
@@ -201,13 +229,38 @@ class OverviewComponent extends React.Component {
     let meshData = []
     if(this.state.meshScan.Istio && this.state.meshScanNamespaces.Istio){
       this.state.meshScanNamespaces.Istio.map( ns => {
-        meshData.push(this.state.meshScan.Istio.filter(e => e.namespace == ns))
+        meshData.push({ data: this.state.meshScan.Istio.filter(e => e.namespace == ns), mesh: meshImg.istio})
       })
+    } else {
+      meshData.push({ data: null, mesh: {...meshImg.istio, gradient: "linear-gradient(147deg, #000000, #434343)"}})
     }
     if(this.state.meshScan.osm && this.state.meshScanNamespaces.osm){
       this.state.meshScanNamespaces.osm.map( ns => {
-        meshData.push(this.state.meshScan.osm.filter(e => e.namespace == ns))
+        meshData.push({data: this.state.meshScan.osm.filter(e => e.namespace == ns), mesh: meshImg.osm})
       })
+    } else {
+      meshData.push({ data: null, mesh: {...meshImg.osm, gradient: "linear-gradient(147deg, #000000, #434343)"}})
+    }
+    if(this.state.meshScan.Linkerd && this.state.meshScanNamespaces.Linkerd){
+      this.state.meshScanNamespaces.Linkerd.map( ns => {
+        meshData.push({data: this.state.meshScan.Linkerd.filter(e => e.namespace == ns), mesh: meshImg.Linkerd})
+      })
+    } else {
+      meshData.push({ data: null, mesh: {...meshImg.Linkerd, gradient: "linear-gradient(147deg, #000000, #434343)"}})
+    }
+    if(this.state.meshScan.Consul && this.state.meshScanNamespaces.Consul){
+      this.state.meshScanNamespaces.Consul.map( ns => {
+        meshData.push({ data: this.state.meshScan.Consul.filter(e => e.namespace == ns), mesh: meshImg.Consul})
+      })
+    } else {
+      meshData.push({ data: null, mesh: {...meshImg.Consul, gradient: "linear-gradient(147deg, #000000, #434343)"}})
+    }
+    if(this.state.meshScan["Network Service Mesh"] && this.state.meshScanNamespaces["Network Service Mesh"]){
+      this.state.meshScanNamespaces["Network Service Mesh"].map( ns => {
+        meshData.push({ data: this.state.meshScan["Network Service Mesh"].filter(e => e.namespace == ns), mesh: meshImg["Network Service Mesh"]})
+      })
+    } else {
+      meshData.push({ data: null, mesh: {...meshImg["Network Service Mesh"], gradient: "linear-gradient(147deg, #000000, #434343)"}})
     }
     console.log(meshData)
     return (
@@ -222,7 +275,7 @@ class OverviewComponent extends React.Component {
             alignItems="center"
             spacing={8}
           >
-            { meshData.map(data => <MeshCardComponent img="/static/img/osm.svg" meshName="istio" meshData={data} />)
+            { meshData.map(data => <MeshCardComponent meshImg={data.mesh} meshName="istio" meshData={data.data} />)
             }
           </Grid>
         </Paper>
