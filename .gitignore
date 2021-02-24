@@ -49,6 +49,7 @@ dist/
 
 **/.idea
 
+swagger.yaml
 yarn.lock
 
 # Generated binaries
