@@ -148,6 +148,9 @@ site:
 build-docs:
 	cd docs; $(jekyll) build --drafts
 
+build-graphql-docs:
+	cd docs; build-docs: bundle exec rake graphql:compile_docs
+
 docker-docs:
 	cd docs; docker run --name meshery-docs --rm -p 4000:4000 -v `pwd`:"/srv/jekyll" jekyll/jekyll:3.8.5 bash -c "bundle install; jekyll serve --drafts --livereload"
 
