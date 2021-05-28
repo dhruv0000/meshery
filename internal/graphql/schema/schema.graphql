@@ -185,6 +185,12 @@ type NameSpace {
 	namespace: String!
 }
 
+# ============== Perf =================================
+
+type PerfResult {
+	result: String!
+}
+
 # ============== ROOT =================================
 
 type Query {
@@ -206,6 +212,8 @@ type Query {
 
 	# Query available Namesapces in your cluster
 	getAvailableNamespaces: [NameSpace!]!
+
+	getPerfResult(id: ID): PerfResult!
 }
 
 # 
@@ -238,4 +246,7 @@ type Subscription {
 
 	# Listen to changes in the list of available Namesapces in your cluster
     listenToMeshSyncEvents: OperatorControllerStatus!
+
+
+	subscribePerfResults: [PerfResult!]!
 }

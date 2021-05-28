@@ -46,6 +46,10 @@ func (r *queryResolver) GetAvailableNamespaces(ctx context.Context) ([]*model.Na
 	return r.getAvailableNamespaces(ctx)
 }
 
+func (r *queryResolver) GetPerfResult(ctx context.Context, id *string) (*model.PerfResult, error) {
+	return r.getPerfResult(ctx)
+}
+
 func (r *subscriptionResolver) ListenToAddonState(ctx context.Context, selector *model.MeshType) (<-chan []*model.AddonList, error) {
 	if selector != nil {
 		return r.listenToAddonState(ctx, selector)
@@ -68,6 +72,10 @@ func (r *subscriptionResolver) ListenToOperatorState(ctx context.Context) (<-cha
 
 func (r *subscriptionResolver) ListenToMeshSyncEvents(ctx context.Context) (<-chan *model.OperatorControllerStatus, error) {
 	return r.listenToMeshSyncEvents(ctx)
+}
+
+func (r *subscriptionResolver) SubscribePerfResults(ctx context.Context) (<-chan []*model.PerfResult, error) {
+	return r.subscribePerfResults(ctx)
 }
 
 // Mutation returns generated.MutationResolver implementation.

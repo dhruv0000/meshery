@@ -62,6 +62,10 @@ type OperatorStatusInput struct {
 	TargetStatus Status `json:"targetStatus"`
 }
 
+type PerfResult struct {
+	Result string `json:"result"`
+}
+
 type MeshType string
 
 const (

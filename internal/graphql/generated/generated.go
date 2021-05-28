@@ -91,11 +91,16 @@ type ComplexityRoot struct {
 		Version     func(childComplexity int) int
 	}
 
+	PerfResult struct {
+		Result func(childComplexity int) int
+	}
+
 	Query struct {
 		GetAvailableAddons     func(childComplexity int, selector *model.MeshType) int
 		GetAvailableNamespaces func(childComplexity int) int
 		GetControlPlanes       func(childComplexity int, filter *model.ControlPlaneFilter) int
 		GetOperatorStatus      func(childComplexity int) int
+		GetPerfResult          func(childComplexity int, id *string) int
 	}
 
 	Subscription struct {
@@ -103,6 +108,7 @@ type ComplexityRoot struct {
 		ListenToControlPlaneState func(childComplexity int, filter *model.ControlPlaneFilter) int
 		ListenToMeshSyncEvents    func(childComplexity int) int
 		ListenToOperatorState     func(childComplexity int) int
+		SubscribePerfResults      func(childComplexity int) int
 	}
 }
 
@@ -115,12 +121,14 @@ type QueryResolver interface {
 	GetControlPlanes(ctx context.Context, filter *model.ControlPlaneFilter) ([]*model.ControlPlane, error)
 	GetOperatorStatus(ctx context.Context) (*model.OperatorStatus, error)
 	GetAvailableNamespaces(ctx context.Context) ([]*model.NameSpace, error)
+	GetPerfResult(ctx context.Context, id *string) (*model.PerfResult, error)
 }
 type SubscriptionResolver interface {
 	ListenToAddonState(ctx context.Context, selector *model.MeshType) (<-chan []*model.AddonList, error)
 	ListenToControlPlaneState(ctx context.Context, filter *model.ControlPlaneFilter) (<-chan []*model.ControlPlane, error)
 	ListenToOperatorState(ctx context.Context) (<-chan *model.OperatorStatus, error)
 	ListenToMeshSyncEvents(ctx context.Context) (<-chan *model.OperatorControllerStatus, error)
+	SubscribePerfResults(ctx context.Context) (<-chan []*model.PerfResult, error)
 }
 
 type executableSchema struct {
@@ -302,6 +310,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OperatorStatus.Version(childComplexity), true
 
+	case "PerfResult.result":
+		if e.complexity.PerfResult.Result == nil {
+			break
+		}
+
+		return e.complexity.PerfResult.Result(childComplexity), true
+
 	case "Query.getAvailableAddons":
 		if e.complexity.Query.GetAvailableAddons == nil {
 			break
@@ -340,6 +355,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetOperatorStatus(childComplexity), true
 
+	case "Query.getPerfResult":
+		if e.complexity.Query.GetPerfResult == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getPerfResult_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetPerfResult(childComplexity, args["id"].(*string)), true
+
 	case "Subscription.listenToAddonState":
 		if e.complexity.Subscription.ListenToAddonState == nil {
 			break
@@ -377,6 +404,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Subscription.ListenToOperatorState(childComplexity), true
+
+	case "Subscription.subscribePerfResults":
+		if e.complexity.Subscription.SubscribePerfResults == nil {
+			break
+		}
+
+		return e.complexity.Subscription.SubscribePerfResults(childComplexity), true
 
 	}
 	return 0, false
@@ -646,6 +680,12 @@ type NameSpace {
 	namespace: String!
 }
 
+# ============== Perf =================================
+
+type PerfResult {
+	result: String!
+}
+
 # ============== ROOT =================================
 
 type Query {
@@ -667,6 +707,8 @@ type Query {
 
 	# Query available Namesapces in your cluster
 	getAvailableNamespaces: [NameSpace!]!
+
+	getPerfResult(id: ID): PerfResult!
 }
 
 # 
@@ -699,6 +741,9 @@ type Subscription {
 
 	# Listen to changes in the list of available Namesapces in your cluster
     listenToMeshSyncEvents: OperatorControllerStatus!
+
+
+	subscribePerfResults: [PerfResult!]!
 }
 `, BuiltIn: false},
 }
@@ -780,6 +825,21 @@ func (ec *executionContext) field_Query_getControlPlanes_args(ctx context.Contex
 		}
 	}
 	args["filter"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getPerfResult_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1629,6 +1689,41 @@ func (ec *executionContext) _OperatorStatus_error(ctx context.Context, field gra
 	return ec.marshalOError2ᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐError(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PerfResult_result(ctx context.Context, field graphql.CollectedField, obj *model.PerfResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PerfResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Result, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_getAvailableAddons(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1778,6 +1873,48 @@ func (ec *executionContext) _Query_getAvailableNamespaces(ctx context.Context, f
 	res := resTmp.([]*model.NameSpace)
 	fc.Result = res
 	return ec.marshalNNameSpace2ᚕᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐNameSpaceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getPerfResult(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getPerfResult_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetPerfResult(rctx, args["id"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PerfResult)
+	fc.Result = res
+	return ec.marshalNPerfResult2ᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐPerfResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2040,6 +2177,51 @@ func (ec *executionContext) _Subscription_listenToMeshSyncEvents(ctx context.Con
 			graphql.MarshalString(field.Alias).MarshalGQL(w)
 			w.Write([]byte{':'})
 			ec.marshalNOperatorControllerStatus2ᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐOperatorControllerStatus(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
+}
+
+func (ec *executionContext) _Subscription_subscribePerfResults(ctx context.Context, field graphql.CollectedField) (ret func() graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().SubscribePerfResults(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func() graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan []*model.PerfResult)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalNPerfResult2ᚕᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐPerfResultᚄ(ctx, field.Selections, res).MarshalGQL(w)
 			w.Write([]byte{'}'})
 		})
 	}
@@ -3492,6 +3674,33 @@ func (ec *executionContext) _OperatorStatus(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var perfResultImplementors = []string{"PerfResult"}
+
+func (ec *executionContext) _PerfResult(ctx context.Context, sel ast.SelectionSet, obj *model.PerfResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, perfResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PerfResult")
+		case "result":
+			out.Values[i] = ec._PerfResult_result(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3560,6 +3769,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "getPerfResult":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getPerfResult(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -3596,6 +3819,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 		return ec._Subscription_listenToOperatorState(ctx, fields[0])
 	case "listenToMeshSyncEvents":
 		return ec._Subscription_listenToMeshSyncEvents(ctx, fields[0])
+	case "subscribePerfResults":
+		return ec._Subscription_subscribePerfResults(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -4114,6 +4339,57 @@ func (ec *executionContext) marshalNOperatorStatus2ᚖgithubᚗcomᚋlayer5ioᚋ
 	return ec._OperatorStatus(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPerfResult2githubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐPerfResult(ctx context.Context, sel ast.SelectionSet, v model.PerfResult) graphql.Marshaler {
+	return ec._PerfResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPerfResult2ᚕᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐPerfResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PerfResult) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPerfResult2ᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐPerfResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNPerfResult2ᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐPerfResult(ctx context.Context, sel ast.SelectionSet, v *model.PerfResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._PerfResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNStatus2githubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐStatus(ctx context.Context, v interface{}) (model.Status, error) {
 	var res model.Status
 	err := res.UnmarshalGQL(v)
@@ -4413,6 +4689,21 @@ func (ec *executionContext) marshalOError2ᚖgithubᚗcomᚋlayer5ioᚋmeshery�
 		return graphql.Null
 	}
 	return ec._Error(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalID(*v)
 }
 
 func (ec *executionContext) unmarshalOMeshType2ᚖgithubᚗcomᚋlayer5ioᚋmesheryᚋinternalᚋgraphqlᚋmodelᚐMeshType(ctx context.Context, v interface{}) (*model.MeshType, error) {
