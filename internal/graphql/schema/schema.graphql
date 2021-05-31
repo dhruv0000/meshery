@@ -188,7 +188,21 @@ type NameSpace {
 # ============== Perf =================================
 
 type PerfResult {
+	page: Int!
+	pageSize: Int!
+	totalCount: Int!
+
+	# To-Do
 	result: String!
+}
+
+input PageFilter {
+	page: Int!
+	pageSize: Int!
+	order: String!
+	search: String
+	from: String
+	to: String
 }
 
 # ============== ROOT =================================
@@ -216,7 +230,6 @@ type Query {
 	getPerfResult(id: ID): PerfResult!
 }
 
-# 
 
 type Mutation {
 
@@ -248,5 +261,10 @@ type Subscription {
     listenToMeshSyncEvents: OperatorControllerStatus!
 
 
-	subscribePerfResults: [PerfResult!]!
+	subscribePerfResults(selector: PageFilter): PerfResult!
+
+	subscribePerfProfile(selector: PageFilter): PerfResult!
+
+	
+
 }
