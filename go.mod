@@ -10,7 +10,7 @@ replace (
 )
 
 require (
-	fortio.org/fortio v1.14.2
+	fortio.org/fortio v1.15.2
 	github.com/99designs/gqlgen v0.13.0
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -56,7 +56,6 @@ require (
 	google.golang.org/grpc v1.37.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	gorm.io/gorm v1.20.10
 	k8s.io/api v0.18.12
 	k8s.io/apimachinery v0.18.12
