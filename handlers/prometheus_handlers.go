@@ -12,6 +12,7 @@ import (
 
 	"github.com/layer5io/meshery/helpers"
 	"github.com/layer5io/meshery/models"
+	"github.com/layer5io/meshkit/utils"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -90,7 +91,7 @@ func (h *Handler) ScanGrafanaHandler(w http.ResponseWriter, req *http.Request, p
 	}
 }
 
-// PrometheusConfigHandler is used for persisting prometheus configuration
+// PrometheusConfigHandler is used for fetching or persisting prometheus configuration
 func (h *Handler) PrometheusConfigHandler(w http.ResponseWriter, req *http.Request, prefObj *models.Preference, user *models.User, provider models.Provider) {
 	// if req.Method != http.MethodPost && req.Method != http.MethodDelete {
 	// 	w.WriteHeader(http.StatusNotFound)
@@ -100,7 +101,7 @@ func (h *Handler) PrometheusConfigHandler(w http.ResponseWriter, req *http.Reque
 	if req.Method == http.MethodGet {
 		err := json.NewEncoder(w).Encode(prefObj.Prometheus)
 		if err != nil {
-			logrus.Errorf("error marshaling Prometheus config: %v", err)
+			h.log.Error(utils.ErrMarshal(err))
 			http.Error(w, "unable to marshal Prometheus config", http.StatusInternalServerError)
 			return
 		}

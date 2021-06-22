@@ -11,6 +11,7 @@ import (
 
 	"github.com/layer5io/meshery/models"
 
+	"github.com/layer5io/meshkit/utils"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -19,7 +20,7 @@ func init() {
 	gob.Register(&models.GrafanaClient{})
 }
 
-// GrafanaConfigHandler is used for persisting or removing Grafana configuration
+// GrafanaConfigHandler is used for fetching, persisting or removing Grafana configuration
 func (h *Handler) GrafanaConfigHandler(w http.ResponseWriter, req *http.Request, prefObj *models.Preference, user *models.User, p models.Provider) {
 	// if req.Method != http.MethodPost && req.Method != http.MethodDelete {
 	// 	w.WriteHeader(http.StatusNotFound)
@@ -29,7 +30,7 @@ func (h *Handler) GrafanaConfigHandler(w http.ResponseWriter, req *http.Request,
 	if req.Method == http.MethodGet {
 		err := json.NewEncoder(w).Encode(prefObj.Grafana)
 		if err != nil {
-			logrus.Errorf("error marshaling Grafana config: %v", err)
+			h.log.Error(utils.ErrMarshal(err))
 			http.Error(w, "unable to marshal Grafana config", http.StatusInternalServerError)
 			return
 		}
