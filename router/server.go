@@ -196,7 +196,7 @@ func NewRouter(ctx context.Context, h models.HandlerInterface, port int) *Router
 			return
 		}
 		h.TokenHandler(w, req, provider, false)
-	}))).Methods("POST")
+	}))).Methods("POST", "GET")
 	gMux.Handle("/api/user/token", h.ProviderMiddleware(h.AuthMiddleware(h.SessionInjectorMiddleware(
 		func(w http.ResponseWriter, req *http.Request, _ *models.Preference, _ *models.User, provider models.Provider) {
 			provider.ExtractToken(w, req)
